@@ -10,7 +10,7 @@ public class MatrixUtility {
         return null;
     }
 
-    public static int[] add(int[] a, int[] b)
+    public static int[] combineBinaryVectors(int[] a, int[] b)
     {
         int[] result = new int[a.length];
         for (int i = 0; i < a.length; i++)
