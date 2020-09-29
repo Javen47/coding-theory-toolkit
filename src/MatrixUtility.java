@@ -2,12 +2,24 @@ public class MatrixUtility {
 
     public static int[][] transpose(int[][] matrix)
     {
-        return null;
+       int trans[][] = new int[matrix.length][matrix[0].length];
+        for( int i = 0; i < matrix[0].length; i++) {
+            for( int j = 0; j < matrix.length; j++) {
+                matrix[i][j] = trans[j][i];
+            }
+        }
+        return trans;
     }
 
     public static int[][] multiply(int[][] a, int[][] b)
     {
-        return null;
+       int product[][] = new int[a[0].length][a.length];
+        for( int i = 0; i < a[0].length; i++) {
+            for( int j = 0; j < a.length; j++) {
+                product[i][j] = a[i][j] * b[i][j];
+            }
+        }
+        return product;
     }
 
     public static int[] combineBinaryVectors(int[] a, int[] b)
