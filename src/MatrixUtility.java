@@ -10,6 +10,11 @@ public class MatrixUtility {
         return null;
     }
 
+    public static int[] differenceOfVectors(int[] a, int[] b)
+    {
+        return null;
+    }
+
     public static int[] combineBinaryVectors(int[] a, int[] b)
     {
         int[] result = new int[a.length];

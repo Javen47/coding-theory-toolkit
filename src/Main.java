@@ -52,6 +52,21 @@ public class Main {
             case 11:
                 optionEleven(reader);
                 break;
+            case 12:
+                optionTwelve(reader);
+                break;
+            case 13:
+                optionThirteen(reader);
+                break;
+            case 14:
+                optionFourteen(reader);
+                break;
+            case 15:
+                optionFifteen(reader);
+                break;
+            case 16:
+                optionSixteen(reader);
+                break;
             default:
                 main.printOptions();
                 main.promptInputOptions(reader);
@@ -74,6 +89,11 @@ public class Main {
         System.out.println("9. Determine if the given parameters [n, k, d]q violate the SP bound");
         System.out.println("10. Determine if a given vector can be the coset leader of a PCM");
         System.out.println("11. Calculate the probability of correctly syndrome decoding a received codeword");
+        System.out.println("12. Determine if given vectors belong to a binary linear code");
+        System.out.println("13. Determine which of the given vectors belong to the sphere with a given radius and center");
+        System.out.println("14. Find the minimum weight of the BLC with a generator matrix");
+        System.out.println("15. Find the number of codewords of a given weight in a BLC generator matrix");
+        System.out.println("16. Determine if a given matrix is a generator matrix of a binary doubly-even self-orthogonal code");
     }
 
     private void optionOne(Scanner reader)
@@ -94,7 +114,9 @@ public class Main {
         int[][] PCM = promptInputMatrix(reader);
         System.out.println("For the received vector:");
         int[][] vector = promptInputMatrix(reader);
-        MatrixUtility.printMatrix(CodeUtility.determineOriginalCodeword(PCM, vector));
+
+        System.out.println("Original codeword: ");
+        MatrixUtility.printVector(CodeUtility.determineOriginalHammingCodeword(PCM, vector[0]));
     }
 
     private void optionThree(Scanner reader) throws IOException
@@ -212,6 +234,88 @@ public class Main {
         System.out.println("Result: " + result);
     }
 
+    private void optionTwelve(Scanner reader) throws IOException
+    {
+        System.out.println("For the parity check matrix");
+        int[][] PCM = promptInputMatrix(reader);
+
+        int[][] vectors = promptInputVectors(reader);
+
+        for (int i = 0; i < vectors.length; i++)
+        {
+            if (CodeUtility.determineIfVectorBelongsToBLC(PCM, vectors[i]))
+            {
+                MatrixUtility.printVector(vectors[i]);
+                System.out.print(" belongs to the binary linear code");
+            }
+        }
+    }
+
+    private void optionThirteen(Scanner reader) throws IOException
+    {
+        System.out.println("What is the radius?");
+        int radius = reader.nextInt();
+
+        System.out.println("For the center vector");
+        int[] center = promptInputVector(reader);
+
+        System.out.println("For the vector options");
+        int[][] options = promptInputVectors(reader);
+
+        for(int[] i : options)
+        {
+            if (CodeUtility.calculateDistanceBetweenVectors(i, center) <= radius)
+            {
+                MatrixUtility.printVector(i);
+                System.out.print(" belongs to the sphere");
+            }
+        }
+    }
+
+    private void optionFourteen(Scanner reader) throws IOException
+    {
+        System.out.println("For the generator matrix");
+        int[][] generator = promptInputMatrix(reader);
+
+        int[][] coset = CodeUtility.generateCoset(generator, CodeUtility.cosetReps[0]);
+        int minWeight = CodeUtility.calculateVectorWeight(CodeUtility.findCosetLeader(coset));
+
+        System.out.println("Minimum weight: " + minWeight);
+    }
+
+    private void optionFifteen(Scanner reader) throws IOException
+    {
+        System.out.println("What is the weight?");
+        int weight = reader.nextInt();
+
+        System.out.println("For the generator matrix");
+        int[][] generator = promptInputMatrix(reader);
+
+        int[][] coset = CodeUtility.generateCoset(generator, CodeUtility.cosetReps[0]);
+        int count = 0;
+
+        for (int[] i : coset)
+        {
+            if (CodeUtility.calculateVectorWeight(i) == weight) count++;
+        }
+
+        System.out.println("Number of codewords with given weight: " + count);
+    }
+
+    private void optionSixteen(Scanner reader) throws IOException
+    {
+        System.out.println("For the generator matrix");
+        int[][] generator = promptInputMatrix(reader);
+
+        boolean selfOrthogonal = CodeUtility.determineIfSelfOrthogonal(generator);
+        boolean doublyEven = CodeUtility.determineIfDoublyEven(generator);
+
+        if (selfOrthogonal && doublyEven)
+        {
+            System.out.println("Matrix is of a binary doubly-even self-orthogonal code");
+        }
+    }
+
     private int[][] promptInputNKDParameters(Scanner reader) throws IOException
     {
         System.out.println("How many [n, k, d] parameter sets are there?");
@@ -257,6 +361,22 @@ public class Main {
         }
 
         return parameters;
+    }
+
+    private int[] promptInputVector(Scanner reader) throws IOException
+    {
+        System.out.println("What is the length of the vector?");
+        int length = reader.nextInt();
+
+        int[] vector = new int[length];
+
+        for (int j = 0; j < length; j++)
+        {
+            System.out.println("Value at index[" + j + "]? ");
+            vector[j] = reader.nextInt();
+        }
+
+        return vector;
     }
 
     private int[][] promptInputVectors(Scanner reader) throws IOException

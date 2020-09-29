@@ -183,6 +183,51 @@ public class CodeUtility {
         return x < bound;
     }
 
+    public static boolean determineIfVectorBelongsToBLC(int[][] PCM, int[] vector)
+    {
+        int[][] form = { vector };
+        int[][] syndrome = calculateSyndrome(PCM, form);
+        return determineIfMatrixIsAllModTwo(syndrome);
+    }
+
+    public static boolean determineIfSelfOrthogonal(int[][] generator)
+    {
+        int[][] result = MatrixUtility.multiply(generator, MatrixUtility.transpose(generator));
+        return determineIfMatrixIsAllModTwo(result);
+    }
+
+    public static boolean determineIfDoublyEven(int[][] matrix)
+    {
+        for (int[] i : matrix)
+        {
+            int weight = calculateVectorWeight(i);
+            if (weight % 4 != 0) return false;
+        }
+        return true;
+    }
+
+    private static boolean determineIfMatrixIsAllModTwo(int[][] matrix)
+    {
+        for (int i = 0; i < matrix.length; i++)
+        {
+            for (int j = 0; j < matrix[0].length; j++)
+            {
+                if (matrix[i][j] % 2 != 0) return false;
+            }
+        }
+        return true;
+    }
+
+    public static int calculateDistanceBetweenVectors(int[] a, int[] b)
+    {
+        int difference = 0;
+        for (int i = 0; i < a.length; i++)
+        {
+            if (a[i] != b[i]) difference++;
+        }
+        return difference;
+    }
+
     public static double calculatePackingRadius(int d)
     {
         return Math.floor( (d - 1) / 2 );
@@ -216,9 +261,10 @@ public class CodeUtility {
         return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
     }
 
-    public static int[][] determineOriginalCodeword(int[][] parityCheckMatrix, int[][] vector)
+    public static int[] determineOriginalHammingCodeword(int[][] parityCheckMatrix, int[] vector)
     {
-        int[][] syndrome = calculateSyndrome(parityCheckMatrix, vector);
+        int[][] placeHolder = {vector};
+        int[][] syndrome = calculateSyndrome(parityCheckMatrix, placeHolder);
 
         //compare syndrome to each column of PCM
         for (int i = 0; i < parityCheckMatrix[0].length; i++)
@@ -235,12 +281,12 @@ public class CodeUtility {
             if (columnsMatch)
             {
                 int incorrectBitPosition = i + 1;
-                vector[0][incorrectBitPosition] = vector[0][incorrectBitPosition] == 1 ? 0 : 1;
+                vector[incorrectBitPosition] = vector[incorrectBitPosition] == 1 ? 0 : 1;
                 return vector;
             }
         }
 
-        return null;
+        return vector;
     }
 
     private static int[][] calculateSyndrome(int[][] parityCheckMatrix, int[][] vector)
