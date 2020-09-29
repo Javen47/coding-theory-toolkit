@@ -1,10 +1,52 @@
 public class CodeUtility {
 
-    public static void probabilityOfCorrectDecoding(int codeLength, double singleBitErrorProbability)
+   public static int[][] cosetReps = {
+            {0,0,0,0,0,0},
+            {0,0,0,0,0,1},
+            {0,0,0,0,1,0},
+            {0,0,0,1,0,0},
+            {0,0,1,0,0,0},
+            {0,1,0,0,0,0},
+            {0,0,1,0,1,0},
+            {0,1,0,0,1,0}
+    };
+
+    public static double calculateProbabilityOfCorrectHammingCodeDecoding(int codeLength, double singleBitErrorProbability)
     {
-        double calculation = Math.pow( 1 - singleBitErrorProbability, codeLength) +
+        return Math.pow( 1 - singleBitErrorProbability, codeLength) +
                 codeLength * singleBitErrorProbability * Math.pow(1 - singleBitErrorProbability, codeLength - 1);
-        System.out.println(calculation);
+    }
+
+    //p = single bit error probability
+    public static double calculateProbabilityOfCorrectSyndromeDecoding(int[][] PCM, double p)
+    {
+        double x = 0.0;
+        int n = 0;
+
+        for (int i = 0; i <= n; i++)
+        {
+            x += calculateNumberOfCosetsWithGivenWeight(PCM, i) * Math.pow(p, i) * Math.pow(1 - p, n - i);
+        }
+
+        return x;
+    }
+
+    public static int calculateNumberOfCosetsWithGivenWeight(int[][] matrix, int weight)
+    {
+        int[][][] cosets = generateCosets(matrix);
+        int count = 0;
+
+        for (int i = 0 ; i < cosets.length; i++)
+        {
+            if (calculateCosetWeight(cosets[i]) == weight) count++;
+        }
+
+        return count;
+    }
+
+    public static int calculateCosetWeight(int[][] coset)
+    {
+        return calculateVectorWeight(findCosetLeader(coset));
     }
 
     public static int calculateVectorWeight(int[] vector)
@@ -16,23 +58,48 @@ public class CodeUtility {
         return count;
     }
 
-    //TODO: current implementation assumes there will be 3 rows in input matrix -> 8 rows in coset
+    public static int[][][] generateCosets(int[][] matrix)
+    {
+        int numOfCosets = calculateNumberOfCosets(matrix);
+        int[][][] cosets = new int[numOfCosets][][];
+
+        for (int i = 0; i < numOfCosets; i++)
+        {
+            cosets[i] = generateCoset(matrix, cosetReps[i]);
+        }
+
+        return cosets;
+    }
+
+    //TODO: current implementation assumes there will be 3 rows in input matrix -> 7 rows in coset
     public static int[][] generateCoset(int[][] matrix, int[] cosetRep)
     {
-        int[][] coset = new int[7][cosetRep.length];
+        int numOfCosetRows = 7; //TODO
+        int[][] coset = new int[numOfCosetRows][cosetRep.length];
 
         //first 3 rows are matrix row + cosetRep
         for (int i = 0 ; i < 3; i++)
         {
             coset[i] = MatrixUtility.combineBinaryVectors(matrix[i], cosetRep);
         }
-
         coset[3] = MatrixUtility.combineBinaryVectors(MatrixUtility.combineBinaryVectors(matrix[0], matrix[1]), cosetRep);
         coset[4] = MatrixUtility.combineBinaryVectors(MatrixUtility.combineBinaryVectors(matrix[0], matrix[2]), cosetRep);
         coset[5] = MatrixUtility.combineBinaryVectors(MatrixUtility.combineBinaryVectors(matrix[1], matrix[2]), cosetRep);
         coset[6] = MatrixUtility.combineBinaryVectors(MatrixUtility.combineBinaryVectors(MatrixUtility.combineBinaryVectors(matrix[0], matrix[1]), matrix[2]), cosetRep);
 
         return coset;
+    }
+
+    public static int[][] findCosetLeaders(int[][] matrix)
+    {
+        int[][][] cosets = generateCosets(matrix);
+        int[][] cosetLeaders = new int[cosets.length][matrix[0].length];
+        for (int i = 0; i < cosets.length; i++)
+        {
+            cosetLeaders[i] = findCosetLeader(cosets[i]);
+        }
+
+        return cosetLeaders;
     }
 
     public static int[] findCosetLeader(int[][] coset)
@@ -53,12 +120,103 @@ public class CodeUtility {
         return coset[leader_index];
     }
 
+    public static int findWeightOfHeaviestCosetLeader(int[][] cosetLeaders)
+    {
+        int heaviest_weight = 0;
+        for (int i = 0; i < cosetLeaders.length; i++)
+        {
+            int temp_weight = calculateVectorWeight(cosetLeaders[i]);
+            if (temp_weight > heaviest_weight)
+            {
+                heaviest_weight = temp_weight;
+            }
+        }
+
+        return heaviest_weight;
+    }
+
     public static int calculateNumberOfCosets(int[][] matrix)
     {
         return (int) Math.pow(2, matrix[0].length - matrix.length);
     }
 
-    public static void determineOriginalCodeword(int[][] parityCheckMatrix, int[][] vector)
+    //TODO
+    public static boolean determineIfLinearCodeIsPerfect(int n, int k, int d, int q)
+    {
+        return false;
+    }
+
+    public static boolean determineIfCodeExistsWithinSPBound(int n, int k, int d, int q)
+    {
+        int x = 0;
+        double bound = Math.pow(q, n - k);
+        int sigBound = (d - 1) / 2;
+
+        for (int i = 0; i <= sigBound; i++)
+        {
+            x += combination(n, i) * Math.pow(q - 1, i);
+        }
+
+        return x <= bound;
+    }
+
+    public static boolean determineIfParametersAreOfMDSCode(int n, int k, int d)
+    {
+        return d == n - k + 1;
+    }
+
+    public static boolean determineIfCodeExistsWithinVGBound(int n, int k, int d, int q)
+    {
+        int m = n - k;
+        double bound = Math.pow(q, m) - 1;
+        int x = 0;
+
+        if (k < (n - m)) return false;
+
+        for (int i = 1; i <= (d - 2); i++)
+        {
+            int term1 = (int) Math.pow(q - 1, i);
+            long term2 = combination(n - 1, i);
+            x += term1 * term2;
+        }
+
+        return x < bound;
+    }
+
+    public static double calculatePackingRadius(int d)
+    {
+        return Math.floor( (d - 1) / 2 );
+    }
+
+    //radius = largest weight of coset leaders
+    public static int calculateCoveringRadius(int[][] PCM)
+    {
+        int[][] cosetLeaders = findCosetLeaders(PCM);
+        return findWeightOfHeaviestCosetLeader(cosetLeaders);
+    }
+
+    /*
+        ( n )
+        ( r ) == n C r
+     */
+    public static long combination(int n, int r)
+    {
+        if (0 <= r && r <= n)
+        {
+            return factorial(n) / (factorial(r) * factorial(n - r));
+        }
+        else
+        {
+            throw new ArithmeticException("Combination error: parameters must be 0 <= r && r <= n");
+        }
+    }
+
+    private static long factorial(long n)
+    {
+        return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
+    }
+
+    public static int[][] determineOriginalCodeword(int[][] parityCheckMatrix, int[][] vector)
     {
         int[][] syndrome = calculateSyndrome(parityCheckMatrix, vector);
 
@@ -78,11 +236,11 @@ public class CodeUtility {
             {
                 int incorrectBitPosition = i + 1;
                 vector[0][incorrectBitPosition] = vector[0][incorrectBitPosition] == 1 ? 0 : 1;
-                MatrixUtility.printMatrix(vector);
-                break;
+                return vector;
             }
-
         }
+
+        return null;
     }
 
     private static int[][] calculateSyndrome(int[][] parityCheckMatrix, int[][] vector)
