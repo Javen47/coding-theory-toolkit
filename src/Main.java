@@ -67,6 +67,21 @@ public class Main {
             case 16:
                 optionSixteen(reader);
                 break;
+            case 17:
+                optionSeventeen(reader);
+                break;
+            case 18:
+                optionEighteen(reader);
+                break;
+            case 19:
+                optionNineteen(reader);
+                break;
+            case 20:
+                optionTwenty(reader);
+                break;
+            case 21:
+                optionTwentyOne(reader);
+                break;
             default:
                 main.printOptions();
                 main.promptInputOptions(reader);
@@ -79,7 +94,7 @@ public class Main {
         System.out.println("\n\nWhat would you like to do?\n-");
 
         System.out.println("1. Calculate the probability of decoding a received hamming codeword correctly");
-        System.out.println("2. Given a PCM and a received vector, determine original codeword");
+        System.out.println("2. Given a PCM and a received vector, determine original codeword using syndrome decoding");
         System.out.println("3. Determine if the given parameters [n, k, d] are the parameters of an MDS code");
         System.out.println("4. Determine if the given parameters [n, k, d]q imply the existence of a code by satisfying the VG bound");
         System.out.println("5. Determine if the given parameters [n, k, d] correspond to a given packing radius");
@@ -88,12 +103,17 @@ public class Main {
         System.out.println("8. Calculate combination");
         System.out.println("9. Determine if the given parameters [n, k, d]q violate the SP bound");
         System.out.println("10. Determine if a given vector can be the coset leader of a PCM");
-        System.out.println("11. Calculate the probability of correctly syndrome decoding a received codeword");
+        System.out.println("11. Calculate the probability of correctly using syndrome decoding on a received codeword");
         System.out.println("12. Determine if given vectors belong to a binary linear code");
         System.out.println("13. Determine which of the given vectors belong to the sphere with a given radius and center");
         System.out.println("14. Find the minimum weight of the BLC with a generator matrix");
         System.out.println("15. Find the number of codewords of a given weight in a BLC generator matrix");
         System.out.println("16. Determine if a given matrix is a generator matrix of a binary doubly-even self-orthogonal code");
+        System.out.println("17. Transpose a matrix");
+        System.out.println("18. Calculate syndrome");
+        System.out.println("19. Determine which of the given pairs of vectors belong to the same coset given a PCM");
+        System.out.println("20. Determine which of the given pairs of vectors have the same syndrome with respect to a PCM");
+        System.out.println("21. Determine if a given parity check matrix is of a ternary perfect code");
     }
 
     private void optionOne(Scanner reader)
@@ -110,13 +130,7 @@ public class Main {
 
     private void optionTwo(Scanner reader) throws IOException
     {
-        System.out.println("For the Parity Check Matrix:");
-        int[][] PCM = promptInputMatrix(reader);
-        System.out.println("For the received vector:");
-        int[][] vector = promptInputMatrix(reader);
-
-        System.out.println("Original codeword: ");
-        MatrixUtility.printVector(CodeUtility.determineOriginalHammingCodeword(PCM, vector[0]));
+        determineOriginalCodewordUsingSyndromeDecoding(reader);
     }
 
     private void optionThree(Scanner reader) throws IOException
@@ -207,19 +221,8 @@ public class Main {
 
     private void optionTen(Scanner reader) throws IOException
     {
-        System.out.println("For the parity check matrix: ");
-        int[][] PCM = promptInputMatrix(reader);
-        int[][] vectors = promptInputVectors(reader);
-        int[][] cosetLeaders = CodeUtility.findCosetLeaders(PCM);
-
-        for (int i = 0; i < vectors.length; i++)
-        {
-            if (MatrixUtility.determineIfVectorsAreEqual(vectors[i], cosetLeaders[i]))
-            {
-                MatrixUtility.printVector(vectors[i]);
-                System.out.println("can be a coset leader");
-            }
-        }
+        System.out.println("Current believed solution: if the syndrome of a vector doesn't match any columns of the PCM, then it is the coset leader");
+        calculateSyndromes(reader);
     }
 
     private void optionEleven(Scanner reader) throws IOException
@@ -313,7 +316,74 @@ public class Main {
         if (selfOrthogonal && doublyEven)
         {
             System.out.println("Matrix is of a binary doubly-even self-orthogonal code");
+        } else
+        {
+            System.out.println("Matrix is NOT");
         }
+    }
+
+    private void optionSeventeen(Scanner reader) throws IOException
+    {
+        int[][] matrix = promptInputMatrix(reader);
+        MatrixUtility.printMatrix(MatrixUtility.transpose(matrix));
+    }
+
+    private void optionEighteen(Scanner reader) throws IOException
+    {
+        System.out.println("For the matrix");
+        int[][] matrix = promptInputMatrix(reader);
+
+        System.out.println("For the vector");
+        int[] vector = promptInputVector(reader);
+
+        MatrixUtility.printMatrix(CodeUtility.calculateSyndrome(matrix, vector));
+    }
+
+    private void optionNineteen(Scanner reader) throws IOException
+    {
+        System.out.println("Current believed solution: if two syndromes match, then the respective vectors are in the same coset");
+        calculateSyndromes(reader);
+    }
+
+    private void optionTwenty(Scanner reader) throws IOException
+    {
+        calculateSyndromes(reader);
+    }
+
+    private void optionTwentyOne(Scanner reader) throws IOException
+    {
+        System.out.println("For the parity check matrix");
+        int[][] PCM = promptInputMatrix(reader);
+
+        boolean result = CodeUtility.determineIfTernaryPerfectCode(PCM);
+        System.out.println("Is ternary perfect code: " + result);
+    }
+
+    private void calculateSyndromes(Scanner reader) throws IOException
+    {
+        System.out.println("For the parity check matrix");
+        int[][] PCM = promptInputMatrix(reader);
+
+        int[][] vectors = promptInputVectors(reader);
+
+        for (int[] i : vectors)
+        {
+            int[][] syndrome = CodeUtility.calculateSyndrome(PCM, i);
+            MatrixUtility.printVector(i);
+            System.out.println(": ");
+            MatrixUtility.printMatrix(syndrome);
+        }
+    }
+
+    private void determineOriginalCodewordUsingSyndromeDecoding(Scanner reader) throws IOException
+    {
+        System.out.println("For the Parity Check Matrix:");
+        int[][] PCM = promptInputMatrix(reader);
+        System.out.println("For the received vector:");
+        int[] vector = promptInputVector(reader);
+
+        System.out.println("Original codeword: ");
+        MatrixUtility.printVector(CodeUtility.determineOriginalCodewordUsingSyndromeDecoding(PCM, vector));
     }
 
     private int[][] promptInputNKDParameters(Scanner reader) throws IOException

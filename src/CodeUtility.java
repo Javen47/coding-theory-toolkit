@@ -11,6 +11,17 @@ public class CodeUtility {
             {0,1,0,0,1,0}
     };
 
+    public static int[][] cosetReps5 = {
+            {0,0,0,0,0},
+            {0,0,0,0,1},
+            {0,0,0,1,0},
+            {0,0,1,0,0},
+            {0,1,0,0,0},
+            {1,0,0,0,0},
+            {0,1,0,1,0},
+            {1,0,0,1,0}
+    };
+
     public static double calculateProbabilityOfCorrectHammingCodeDecoding(int codeLength, double singleBitErrorProbability)
     {
         return Math.pow( 1 - singleBitErrorProbability, codeLength) +
@@ -21,11 +32,14 @@ public class CodeUtility {
     public static double calculateProbabilityOfCorrectSyndromeDecoding(int[][] PCM, double p)
     {
         double x = 0.0;
-        int n = 0;
+        int n = PCM[0].length;
 
         for (int i = 0; i <= n; i++)
         {
-            x += calculateNumberOfCosetsWithGivenWeight(PCM, i) * Math.pow(p, i) * Math.pow(1 - p, n - i);
+            int temp = calculateNumberOfCosetsWithGivenWeight(PCM, i);
+            x +=  temp
+                    * Math.pow(p, i)
+                    * Math.pow(1 - p, n - i);
         }
 
         return x;
@@ -33,12 +47,14 @@ public class CodeUtility {
 
     public static int calculateNumberOfCosetsWithGivenWeight(int[][] matrix, int weight)
     {
-        int[][][] cosets = generateCosets(matrix);
+        //int numOfCosets = calculateNumberOfCosets(matrix);
+        int numOfCosets = 8;
         int count = 0;
+        //int[][][] cosets = generateCosets(matrix);
 
-        for (int i = 0 ; i < cosets.length; i++)
+        for (int i = 0 ; i < numOfCosets; i++)
         {
-            if (calculateCosetWeight(cosets[i]) == weight) count++;
+            if (calculateVectorWeight(cosetReps[i]) == weight) count++;
         }
 
         return count;
@@ -60,12 +76,19 @@ public class CodeUtility {
 
     public static int[][][] generateCosets(int[][] matrix)
     {
+        int columns = matrix[0].length;
         int numOfCosets = calculateNumberOfCosets(matrix);
         int[][][] cosets = new int[numOfCosets][][];
 
         for (int i = 0; i < numOfCosets; i++)
         {
-            cosets[i] = generateCoset(matrix, cosetReps[i]);
+            if (columns == 6)
+            {
+                cosets[i] = generateCoset(matrix, cosetReps[i]);
+            } else if (columns == 5)
+            {
+                cosets[i] = generateCoset(matrix, cosetReps5[i]);
+            }
         }
 
         return cosets;
@@ -146,6 +169,12 @@ public class CodeUtility {
         return false;
     }
 
+    public static boolean determineIfTernaryPerfectCode(int[][] PCM)
+    {
+        int[][] result = MatrixUtility.multiply(PCM, MatrixUtility.transpose(PCM));
+        return determineIfMatrixIsGivenMod(result, 3);
+    }
+
     public static boolean determineIfCodeExistsWithinSPBound(int n, int k, int d, int q)
     {
         int x = 0;
@@ -187,13 +216,13 @@ public class CodeUtility {
     {
         int[][] form = { vector };
         int[][] syndrome = calculateSyndrome(PCM, form);
-        return determineIfMatrixIsAllModTwo(syndrome);
+        return determineIfMatrixIsGivenMod(syndrome, 2);
     }
 
     public static boolean determineIfSelfOrthogonal(int[][] generator)
     {
         int[][] result = MatrixUtility.multiply(generator, MatrixUtility.transpose(generator));
-        return determineIfMatrixIsAllModTwo(result);
+        return determineIfMatrixIsGivenMod(result, 2);
     }
 
     public static boolean determineIfDoublyEven(int[][] matrix)
@@ -206,13 +235,13 @@ public class CodeUtility {
         return true;
     }
 
-    private static boolean determineIfMatrixIsAllModTwo(int[][] matrix)
+    private static boolean determineIfMatrixIsGivenMod(int[][] matrix, int mod)
     {
         for (int i = 0; i < matrix.length; i++)
         {
             for (int j = 0; j < matrix[0].length; j++)
             {
-                if (matrix[i][j] % 2 != 0) return false;
+                if (matrix[i][j] % mod != 0) return false;
             }
         }
         return true;
@@ -236,8 +265,19 @@ public class CodeUtility {
     //radius = largest weight of coset leaders
     public static int calculateCoveringRadius(int[][] PCM)
     {
-        int[][] cosetLeaders = findCosetLeaders(PCM);
-        return findWeightOfHeaviestCosetLeader(cosetLeaders);
+        int numOfCosets = calculateNumberOfCosets(PCM);
+        int largest_weight = 0;
+
+        for (int i = 0; i < numOfCosets; i++)
+        {
+            int weight = calculateVectorWeight(cosetReps[i]);
+            if (weight > largest_weight)
+            {
+                largest_weight = weight;
+            }
+        }
+
+        return largest_weight;
     }
 
     /*
@@ -261,10 +301,9 @@ public class CodeUtility {
         return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
     }
 
-    public static int[] determineOriginalHammingCodeword(int[][] parityCheckMatrix, int[] vector)
+    public static int[] determineOriginalCodewordUsingSyndromeDecoding(int[][] parityCheckMatrix, int[] vector)
     {
-        int[][] placeHolder = {vector};
-        int[][] syndrome = calculateSyndrome(parityCheckMatrix, placeHolder);
+        int[][] syndrome = calculateSyndrome(parityCheckMatrix, vector);
 
         //compare syndrome to each column of PCM
         for (int i = 0; i < parityCheckMatrix[0].length; i++)
@@ -272,7 +311,7 @@ public class CodeUtility {
             boolean columnsMatch = true;
             for (int j = 0; j < parityCheckMatrix.length; j++)
             {
-                if (parityCheckMatrix[j][i] != syndrome[j][0])
+                if (parityCheckMatrix[j][i] != syndrome[j][0] % 2)
                 {
                     columnsMatch = false;
                 }
@@ -280,7 +319,7 @@ public class CodeUtility {
 
             if (columnsMatch)
             {
-                int incorrectBitPosition = i + 1;
+                int incorrectBitPosition = i;
                 vector[incorrectBitPosition] = vector[incorrectBitPosition] == 1 ? 0 : 1;
                 return vector;
             }
@@ -289,10 +328,16 @@ public class CodeUtility {
         return vector;
     }
 
-    private static int[][] calculateSyndrome(int[][] parityCheckMatrix, int[][] vector)
+    public static int[][] calculateSyndrome(int[][] parityCheckMatrix, int[][] vector)
     {
         return MatrixUtility.multiply(
                 parityCheckMatrix, MatrixUtility.transpose(vector));
+    }
+
+    public static int[][] calculateSyndrome(int[][] parityCheckMatrix, int[] vector)
+    {
+        return MatrixUtility.multiply(
+                parityCheckMatrix, MatrixUtility.transposeVector(vector));
     }
 
 }
