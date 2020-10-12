@@ -82,6 +82,27 @@ public class Main {
             case 21:
                 optionTwentyOne(reader);
                 break;
+            case 22:
+                optionTwentyTwo(reader);
+                break;
+            case 23:
+                optionTwentyThree(reader);
+                break;
+            case 24:
+                optionTwentyFour(reader);
+                break;
+            case 25:
+                optionTwentyFive(reader);
+                break;
+            case 26:
+                optionTwentySix(reader);
+                break;
+            case 27:
+                optionTwentySeven(reader);
+                break;
+            case 28:
+                optionTwentyEight(reader);
+                break;
             default:
                 main.printOptions();
                 main.promptInputOptions(reader);
@@ -114,6 +135,13 @@ public class Main {
         System.out.println("19. Determine which of the given pairs of vectors belong to the same coset given a PCM");
         System.out.println("20. Determine which of the given pairs of vectors have the same syndrome with respect to a PCM");
         System.out.println("21. Determine if a given parity check matrix is of a ternary perfect code");
+        System.out.println("22. Determine if the given parameters are of a Reed-Miller code");
+        System.out.println("23. Suppose that you have to choose a Reed-Muller code R(r,m) of smallest possible length that encodes a given number of info symbols and corrects a given number of errors");
+        System.out.println("24. Determine the parameters [n, k, d] of a given order RM code with a given length");
+        System.out.println("25. Determine the parameters [n, k, d] of the dual code of a given RM code");
+        System.out.println("26. Determine if the given parameters are of a self-dual RM code");
+        System.out.println("27. Create a generator matrix for a given RM code");
+        System.out.println("28. Determine if a matrix is a generator matrix of a RM code");
     }
 
     private void optionOne(Scanner reader)
@@ -184,7 +212,7 @@ public class Main {
     {
         System.out.println("For the Parity Check Matrix: ");
         int[][] PCM = promptInputMatrix(reader);
-        for (int[] cosetRep : CodeUtility.cosetReps)
+        for (int[] cosetRep : CodeUtility.cosetReps8)
         {
             MatrixUtility.printVector(cosetRep);
             System.out.println("---");
@@ -280,7 +308,7 @@ public class Main {
         System.out.println("For the generator matrix");
         int[][] generator = promptInputMatrix(reader);
 
-        int[][] coset = CodeUtility.generateCoset(generator, CodeUtility.cosetReps[0]);
+        int[][] coset = CodeUtility.generateCoset(generator, CodeUtility.cosetReps8[0]);
         int minWeight = CodeUtility.calculateVectorWeight(CodeUtility.findCosetLeader(coset));
 
         System.out.println("Minimum weight: " + minWeight);
@@ -294,7 +322,7 @@ public class Main {
         System.out.println("For the generator matrix");
         int[][] generator = promptInputMatrix(reader);
 
-        int[][] coset = CodeUtility.generateCoset(generator, CodeUtility.cosetReps[0]);
+        int[][] coset = CodeUtility.generateCoset(generator, CodeUtility.cosetReps8[0]);
         int count = 0;
 
         for (int[] i : coset)
@@ -359,6 +387,108 @@ public class Main {
         System.out.println("Is ternary perfect code: " + result);
     }
 
+    private void optionTwentyTwo(Scanner reader) throws IOException
+    {
+        int[][] parameters = promptInputNKDParameters(reader);
+        for (int[] i : parameters)
+        {
+            if (CodeUtility.determineIfParametersAreOfReedMullerCode(i[0], i[1], i[2]))
+            {
+                MatrixUtility.printVector(i);
+                System.out.println(" are of a RM code");
+            }
+        }
+    }
+
+    private void optionTwentyThree(Scanner reader) throws IOException
+    {
+        System.out.println("How many info symbols does it encode?");
+        int infoSymbols = reader.nextInt();
+
+        System.out.println("How many errors can it correct?");
+        int numOfCorrectingErrors = reader.nextInt();
+
+        MatrixUtility.printVector(CodeUtility.calculateMinimalRMCode(infoSymbols, numOfCorrectingErrors));
+    }
+
+    private void optionTwentyFour(Scanner reader) throws IOException
+    {
+        System.out.println("What is the order of the RM code?");
+        int order = reader.nextInt(); //r
+
+        System.out.println("What is the length of the RM code?");
+        int length = reader.nextInt(); //n
+
+        int[][] options = promptInputNKDParameters(reader);
+
+        for (int[] i : options)
+        {
+            if (CodeUtility.determineIfParametersAreOfROrderRMCode(
+                    i[0], i[1], i[2], order, length
+            ))
+            {
+                MatrixUtility.printVector(i);
+                System.out.println("is of the given order RM code");
+            }
+        }
+    }
+
+    private void optionTwentyFive(Scanner reader) throws IOException
+    {
+        System.out.println("What is r ?");
+        int r = reader.nextInt();
+
+        System.out.println("What is m ?");
+        int m = reader.nextInt();
+
+        int[][] options = promptInputNKDParameters(reader);
+
+        for (int[] i : options)
+        {
+            if (CodeUtility.determineIfParametersAreOfDualRMCode(
+                    i[0], i[1], i[2], r, m
+            ))
+            {
+                MatrixUtility.printVector(i);
+                System.out.println("is of the dual RM code");
+            }
+        }
+    }
+
+    private void optionTwentySix(Scanner reader) throws IOException
+    {
+        int[][] options = promptInputNKDParameters(reader);
+
+        for (int[] i : options)
+        {
+            if (CodeUtility.determineIfParametersAreOfSelfDualRMCode(
+                    i[0], i[1], i[2]
+            ))
+            {
+                MatrixUtility.printVector(i);
+                System.out.println("is of a self-dual RM code");
+            }
+        }
+    }
+
+    private void optionTwentySeven(Scanner reader) throws IOException
+    {
+        System.out.println("What is r ?");
+        int r = reader.nextInt();
+
+        System.out.println("What is m ?");
+        int m = reader.nextInt();
+
+        CodeUtility.createGeneratorMatrixOfRMCode(r, m, true);
+    }
+
+    private void optionTwentyEight(Scanner reader) throws IOException
+    {
+        int[][] matrix = promptInputMatrix(reader);
+
+        System.out.println(CodeUtility.determineIfGeneratorMatrixIsOfRMCode(matrix));
+    }
+
     private void calculateSyndromes(Scanner reader) throws IOException
     {
         System.out.println("For the parity check matrix");
@@ -384,6 +514,25 @@ public class Main {
 
         System.out.println("Original codeword: ");
         MatrixUtility.printVector(CodeUtility.determineOriginalCodewordUsingSyndromeDecoding(PCM, vector));
+    }
+
+    private int[][] promptInputRMParameters(Scanner reader) throws IOException
+    {
+        System.out.println("How many [r, m] parameter sets are there?");
+        int num = reader.nextInt();
+
+        int[][] parameters = new int[num][2];
+
+        for (int i = 0; i < num; i++)
+        {
+            System.out.println((i + 1) + ".) r = ? : ");
+            parameters[i][0] = reader.nextInt();
+
+            System.out.println((i + 1) + ".) m = ? : ");
+            parameters[i][1] = reader.nextInt();
+        }
+
+        return parameters;
     }
 
     private int[][] promptInputNKDParameters(Scanner reader) throws IOException

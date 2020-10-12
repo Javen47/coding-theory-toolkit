@@ -64,6 +64,18 @@ public class MatrixUtility {
         return result;
     }
 
+    static int[] combineBinaryMatrix(int[][] matrix)
+    {
+        int[] result = new int[matrix.length];
+
+        for (int[] i : matrix)
+        {
+            result = combineBinaryVectors(result, i);
+        }
+
+        return result;
+    }
+
     public static void printMatrix(int[][] matrix)
     {
         System.out.println();
